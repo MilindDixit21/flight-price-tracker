@@ -1,0 +1,41 @@
+/* Root container */
+.search-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 3rem 1rem;
+  font-family: 'Segoe UI', 'Roboto', sans-serif;
+  color: #333;
+}
+
+/* Header */
+.search-container h2 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #1e3a8a; /* enterprise-friendly blue */
+}
+
+/* Paragraph / messages */
+.search-container p {
+  font-size: 1.2rem;
+  margin: 0.5rem 0;
+}
+
+/* Loading state */
+.search-container p:first-of-type {
+  font-style: italic;
+  color: #6b7280; /* subtle gray for loading */
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .search-container h2 {
+    font-size: 1.8rem;
+  }
+  .search-container p {
+    font-size: 1rem;
+  }
+}

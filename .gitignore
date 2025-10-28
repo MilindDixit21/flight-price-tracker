@@ -1,0 +1,36 @@
+# ==========================
+# Node backend
+# ==========================
+server/node_modules/
+server/dist/
+server/.env
+server/npm-debug.log*
+server/yarn-debug.log*
+server/yarn-error.log*
+
+# ==========================
+# Angular frontend
+# ==========================
+client/node_modules/
+client/dist/
+client/.angular/
+client/*.env
+client/npm-debug.log*
+client/yarn-debug.log*
+client/yarn-error.log*
+client/tsconfig.tsbuildinfo
+
+# ==========================
+# OS and Editor files
+# ==========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# Logs
+# ==========================
+*.log

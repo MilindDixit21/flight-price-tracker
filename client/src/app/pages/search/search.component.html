@@ -1,0 +1,7 @@
+<div class="search-container">
+    <h2>Flight Price Tracker</h2>
+    <!-- loading state -->
+    <p *ngIf="loading()">Loading connection test...</p>
+    <!-- display message from backend -->
+    <p *ngIf="!loading()">{{message()}}</p>
+</div>
