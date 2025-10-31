@@ -1,51 +1,75 @@
 import Flight from "../models/Flight.js";
 import PriceHistory from "../models/PriceHistory.js";
+import aviationstack from "../providers/aviationstack.js";
 
-// Simple test endpoint to confirm backend + DB
+/**
+ * @desc Test server + DB connection
+ * @route GET /api/flights/test
+ */
+
 export const testConnection = async(req,res) => {
     return res.json({ok:true, message:'Server +DB ready'});
 }
 
-// Mocked flight search – will later call real 3rd-party APIs
-export const searchFlights = async (req,res, next)=>{
-    try {
-        
-        const {origin, destination} = req.query;
+/**
+ * @desc Search flights via AviationStack provider (real data)
+ * @route GET /api/flights/search?origin=JFK&destination=LAX&date=2025-11-01
+ */
 
-        console.log('[searchFlights] origin=', origin, 'dest=', destination);
+export const searchFlights = async (req, res, next)=>{
+    try {        
+        const {origin, destination, date, limit } = req.query;
 
-        // For Day 2: return dummy/mocked data and optionally save to DB.
-        // Later Sprint 2 will replace with real 3rd-party API calls.
+      if(!origin || !destination){
+        return res.status(400).json({
+            of:false,
+            message:"Missing required query params: origin and destination",
+        });
+      }
 
-        const sample ={
-            flightNumber: 'MOCK123',
-            airline: 'MockAir',
+      // fetch flights from provider (AviationStack)
+        const flights = await aviationstack.search({
             origin,
             destination,
-            departureTime: new Date(),
-            arrivalTime: new Date(Date.now() + 2 * 60 * 60 * 1000),
-            price: Math.round(100 + Math.random() * 400),
-            currency: 'USD',
-            provider: 'mock',
-        }
+            date,
+            limit: limit ? Number(limit):10,
+        });
 
-         // save to DB (optional for demo)
-        const saved = await Flight.create(sample);
+         // stored fetched data in MongoDB (for analytics/history)
+        const savedFlights = await Flight.insertMany(flights, {ordered:false});
 
         console.log(`✅ Flight saved in DB with ID: ${saved._id}`);
 
-        // Update or create price history entry
+        // Update  price history for today
+        if(savedFlights.length > 0){
+            const latestPrice = savedFlights[0].price || null;
+        }
         await PriceHistory.findOneAndUpdate(
-            { origin, destination, date : new Date().toISOString().slice(0,10)},
-            {$push:{history:{price:saved.price, fetchedAt:new Date()}}},
-            {upsert:true, new:true}
+            { 
+                origin, 
+                destination, 
+                date : new Date().toISOString().slice(0,10)
+            },
+            {
+                $push:{history:{price:latestPrice, fetchedAt:new Date()}}
+            },
+            {
+                upsert:true, new:true
+            }
         );
 
         console.log(`📊 Price history updated for ${origin}-${destination}`);
 
-        res.json({ok:true, data:[saved]});
+        res.json({
+            ok:true, 
+            count: flights.length,
+            provider: aviationstack.providerName,
+            data:flights,
+
+        });
 
     } catch (error) {
+        console.error("Flight search failed:", error.message);
         next(error);
     }
-}
+};
