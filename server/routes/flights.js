@@ -1,7 +1,7 @@
 // server/routes/flights.js
 import express from 'express';
 import { query } from 'express-validator';
-import { testConnection, searchFlights } from '../controllers/flightsController.js';
+import { testConnection, getFlights } from '../controllers/flightsController.js';
 import { validateRequest } from '../middleware/validateRequest.js';
 
 
@@ -15,10 +15,10 @@ router.get(
   [
     query('origin').isString().notEmpty(),
     query('destination').isString().notEmpty(),
-    // optional: date param
+    query('date').optional().isString(),
   ],
   validateRequest,
-  searchFlights
+  getFlights
 );
 
 export default router;
