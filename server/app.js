@@ -1,23 +1,30 @@
+import "./config/env.js"; //Load env BEFORE anything else
+
 import express from "express";
 import morgan  from "morgan";
 import cors from "cors";
-import dotenv from "dotenv";
+
+// dotenv.config(); // .env must be in project root folder and where expected by Node 
+
 import { connectDB } from "./db/connect.js"; //ESM import
 import  flightsRouter from "./routes/flights.js";
+import { apiLimiter } from "./middleware/rateLimiter.js";
 import { errorHandler } from "./middleware/error.js";
+// import { cacheMiddleware } from "./providers/cache.js";
 
-// load any variable
-dotenv.config();
 
 // initialize app
 const app = express();
 
-// middleware
+// global middleware
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cors());
 
-//connect DB
+// Optional: attach cache middleware globally (for read-only GET requests)
+// app.use(cacheMiddleware);
+
+//connect to MongoDB
 const dbUri = process.env.MONGODB_URI;
 if(!dbUri){
     console.error('MONGODB_URI not set in env');
@@ -25,10 +32,16 @@ if(!dbUri){
 }
 await connectDB(dbUri);
 
+// base route
+app.get('/', (req, res) =>{
+    res.send("Flight price tracker API is running...");
+});
 
-// route
-app.use('/api/flights', flightsRouter);
+// Apply global API rate limit (recommended for all /api routes)
+app.use("/api/", apiLimiter);
 
+//register flights routes
+app.use("/api/flights", flightsRouter);
 
 // global error handler
 app.use(errorHandler);
