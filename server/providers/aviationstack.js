@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { response } from 'express';
 
 const BASE = 'https://api.aviationstack.com/v1/flights' ;
 
@@ -18,27 +17,27 @@ export default {
 
     async search({origin,destination, date, limit =10}){
         const accessKey  = process.env.FLIGHT_API_KEY;
+        console.log("FLIGHT_API_KEY:", process.env.FLIGHT_API_KEY);
         if(!accessKey ) throw new Error('Missing FLIGHT_API_KEY environment variable');
 
         const queryParams ={
-            access_key:key,
+            access_key:accessKey,
             dep_iata:origin,
             arr_iata:destination,            
-            limit:limit
+            limit,
         };
 
-        if(date){
-            queryParams.flight_date = date;
-        }
-    
+        if(date) queryParams.flight_date = date;
+
+        //make API call
+        const response = await axios.get(BASE, {params: queryParams, timeout:15000});
+
         if(!response.data || !Array.isArray(response.data.data)){
-            throw new Error(`Invalid response from AviaationStack: ${JSON.stringify(response.data)}`);
+            throw new Error(`Invalid response from AviationStack: ${JSON.stringify(response.data)}`);
         }
 
         // normalize to internal format
-
-        const normalized = response.data.data.map(item =>{
-            return{
+        return response.data.data.map(item =>({
                 provider:this.providerName,
                 flightNumber:item.flight?.iataNumber || item.flight?.number || null,
                 airline:item.airline?.name || item.airline?.iata || null,
@@ -49,9 +48,6 @@ export default {
                 price:item.price ?? null,
                 currency:item.currency || 'USD',
                 fetchedAt:new Date().toISOString(),
-            };
-        });
-        
-        return normalized;
-    }
-}
+            }));
+    },
+};
